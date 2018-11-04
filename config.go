@@ -17,15 +17,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
-
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
-	"github.com/golang/glog"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	certutil "k8s.io/client-go/util/cert"
+	"path"
 )
 
 // Get a clientset with in-cluster config.
@@ -61,11 +59,17 @@ func configTLS(config Config, clientset *kubernetes.Clientset) *tls.Config {
 	apiserverCA := x509.NewCertPool()
 	apiserverCA.AppendCertsFromPEM(cert)
 
-	certFile, err := ioutil.ReadFile(config.CertFile)
+
+	certPath := path.Join(config.CertDirectory, config.PairName + ".crt")
+	glog.Infof("Reading %s", certPath)
+	certFile, err := ioutil.ReadFile(certPath)
 	if err != nil {
 		glog.Fatal(err)
 	}
-	keyFile, err := ioutil.ReadFile(config.KeyFile)
+
+	keyPath := path.Join(config.CertDirectory, config.PairName + ".key")
+	glog.Infof("Reading %s", keyPath)
+	keyFile, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		glog.Fatal(err)
 	}

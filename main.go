@@ -14,19 +14,17 @@ import (
 )
 
 type Config struct {
-	CertFile      string
-	KeyFile       string
+	PairName      string
+	CertDirectory string
 	PortNumber    string
 	Mode          string
 	AffinityPatch string
 }
 
 func (c *Config) addFlags() {
-	flag.StringVar(&c.CertFile, "tls-cert-file", c.CertFile, ""+
-		"File containing the default x509 Certificate for HTTPS. (CA cert, if any, concatenated "+
-		"after server cert).")
-	flag.StringVar(&c.KeyFile, "tls-private-key-file", c.KeyFile, ""+
-		"File containing the default x509 private key matching --tls-cert-file.")
+
+	flag.StringVar(&c.PairName, "keypairname", "tls", "certificate and key pair name")
+	flag.StringVar(&c.CertDirectory, "certdir", "/var/run/affinity-admission-controller", "certificate and key directory")
 	flag.StringVar(&c.PortNumber, "port", "8443", "webserver port")
 	flag.StringVar(&c.Mode, "mode", "patchMissing", "")
 	flag.StringVar(&c.AffinityPatch, "affinityPatch", "{}", "")
@@ -63,9 +61,11 @@ func mutatePods(ar v1beta1.AdmissionReview, config *Config) *v1beta1.AdmissionRe
 	reviewResponse.Allowed = true
 
 	if !(config.Mode == "patchAlways" || config.Mode == "patchMissing") {
+		glog.V(2).Infof("%s mode - not patching", config.Mode)
 		return &reviewResponse
 	}
 	if config.Mode == "patchMissing" && pod.Spec.Affinity != nil {
+		glog.V(2).Infof("affinity found - not patching")
 		return &reviewResponse
 	}
 
@@ -75,7 +75,6 @@ func mutatePods(ar v1beta1.AdmissionReview, config *Config) *v1beta1.AdmissionRe
 	reviewResponse.Patch = []byte(affinityPatch)
 	pt := v1beta1.PatchTypeJSONPatch
 	reviewResponse.PatchType = &pt
-
 	return &reviewResponse
 }
 
@@ -105,7 +104,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc, config *Conf
 		return
 	}
 
-	glog.V(2).Info(fmt.Sprintf("handling request: %v", body))
+	glog.V(2).Info(fmt.Sprintf("handling request: %v", string(body)))
 	var reviewResponse *v1beta1.AdmissionResponse
 	ar := v1beta1.AdmissionReview{}
 	deserializer := codecs.UniversalDeserializer()
