@@ -6,6 +6,7 @@ ADD . /go/src/github.com/tolleiv/k8s-affinity-admission
 WORKDIR /go/src/github.com/tolleiv/k8s-affinity-admission
 
 RUN go get -u -v github.com/golang/dep/cmd/dep && dep ensure -v
+RUN go test
 RUN go build -buildmode=pie -ldflags "-linkmode external -extldflags -static -w" -o controller
 
 RUN CGO_ENABLED=0 go build -a -o controller
