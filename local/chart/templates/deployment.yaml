@@ -24,7 +24,7 @@ spec:
       serviceAccountName: "{{ .Values.controller.serviceAccount }}"
       {{- if .Values.controller.affinity }}
       affinity:
-      {{ toYaml .Values.controller.affinity | indent 8 }}
+{{ toYaml .Values.controller.affinity | indent 8 }}
       {{- end }}
       containers:
       - name: webhook
@@ -32,10 +32,8 @@ spec:
         imagePullPolicy: {{ .Values.controller.imagePullPolicy }}
         command: ["/controller"]
         args:
-        - --mode {{ .Values.controller.args.mode }}
-        - --affinityPatch '{{ toJson  .Values.controller.args.affinityPatch }}'
-        - --tls-cert-file /var/run/affinity-admission-controller/tls.crt
-        - --tls-private-key-file /var/run/affinity-admission-controller/tls.key
+        - --mode={{ .Values.controller.args.mode }}
+        - --affinityPatch={{ toJson  .Values.controller.args.affinityPatch }}
         - --logtostderr
         - -v=4
         - 2>&1
