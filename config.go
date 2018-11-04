@@ -18,32 +18,17 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"path"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	certutil "k8s.io/client-go/util/cert"
 
 	"github.com/golang/glog"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	certutil "k8s.io/client-go/util/cert"
 )
 
-type certKey struct {
-	// CertFile is the PEM-encoded certificate, and possibly the complete certificate chain
-	CertFile []byte
-	// KeyFile is the PEM-encoded private key for the certificate specified by CertFile
-	KeyFile []byte
-	// CACertFile is an optional file containing the certificate chain for certKey.CertFile
-	CACertFile string
-	// CertDirectory is a directory that will contain the certificates.  If the cert and key aren't specifically set
-	// this will be used to derive a match with the "pair-name"
-	CertDirectory string
-	// PairName is the name which will be used with CertDirectory to make a cert and key names
-	// It becomes CertDirectory/PairName.crt and CertDirectory/PairName.key
-	PairName string
-}
-
-// get a clientset with in-cluster config.
+// Get a clientset with in-cluster config.
 func getClient() *kubernetes.Clientset {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -56,9 +41,7 @@ func getClient() *kubernetes.Clientset {
 	return clientset
 }
 
-// retrieve the CA cert that will signed the cert used by the
-// "ValidatingAdmissionWebhook or MutationAdmissionWebhook" plugin admission controller.
-func getAPIServerCert(clientset *kubernetes.Clientset) []byte {
+func getApiServerCert(clientset *kubernetes.Clientset) []byte {
 	c, err := clientset.CoreV1().ConfigMaps("kube-system").Get("extension-apiserver-authentication", metav1.GetOptions{})
 	if err != nil {
 		glog.Fatal(err)
@@ -72,30 +55,27 @@ func getAPIServerCert(clientset *kubernetes.Clientset) []byte {
 	return []byte(pem)
 }
 
-func configTLS(clientset *kubernetes.Clientset, ck *certKey) *tls.Config {
-	cert := getAPIServerCert(clientset)
+func configTLS(config Config, clientset *kubernetes.Clientset) *tls.Config {
+	cert := getApiServerCert(clientset)
 	var err error
 	apiserverCA := x509.NewCertPool()
 	apiserverCA.AppendCertsFromPEM(cert)
 
-	certPath := path.Join(ck.CertDirectory, ck.PairName+".crt")
-	keyPath := path.Join(ck.CertDirectory, ck.PairName+".key")
-
-	ck.CertFile, err = ioutil.ReadFile(certPath)
+	certFile, err := ioutil.ReadFile(config.CertFile)
 	if err != nil {
-		glog.Fatalf("Cannot read cert from %s", certPath)
+		glog.Fatal(err)
 	}
-	ck.KeyFile, err = ioutil.ReadFile(keyPath)
+	keyFile, err := ioutil.ReadFile(config.KeyFile)
 	if err != nil {
-		glog.Fatalf("Cannot read key from %s", keyPath)
+		glog.Fatal(err)
 	}
-
-	_, err = certutil.CanReadCertAndKey(certPath, keyPath)
+	_, err = certutil.CanReadCertAndKey(string(certFile), string(keyFile))
 	if err != nil {
 		glog.Fatal("Cannot verify server certificate and key")
 	}
 
-	sCert, err := tls.X509KeyPair(ck.CertFile, ck.KeyFile)
+
+	sCert, err := tls.X509KeyPair(certFile, keyFile)
 	if err != nil {
 		glog.Fatal(err)
 	}

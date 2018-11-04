@@ -322,6 +322,7 @@
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/rest",
+    "k8s.io/client-go/util/cert",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
