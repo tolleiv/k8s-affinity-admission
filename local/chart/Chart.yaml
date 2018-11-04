@@ -1,0 +1,4 @@
+
+name: tolleiv-k8s-affinity-admission-controller
+description: Affinity Admission Controller
+version: 0.1.0

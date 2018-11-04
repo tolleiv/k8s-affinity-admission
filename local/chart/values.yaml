@@ -1,0 +1,33 @@
+# Default values
+rbac:
+  create: true
+
+admissionRegistration:
+  # Possible values: Ignore and Fail
+  failurePolicy: Ignore
+  namespaceSelector:
+    matchLabels:
+      affinity-injection: enabled
+
+controller:
+  image: tolleiv/k8s-affinity-admission
+  imageTag: latest
+  imagePullPolicy: Always
+
+  # Affinity configuration for the controller pod
+  affinity: {}
+
+  args:
+    # Possible values: denyMissing, patchMissing, patchAlways
+    mode: patchMissing
+    affinityPatch: {}
+
+  serviceAccount: k8s-affinity-admission-controller
+  tls:
+    # Admission controller server will inherit this CA from the
+    # extension-apiserver-authentication ConfigMap if available.
+    requestHeaderCA:
+  service:
+    type: NodePort
+    port: 443
+    targetPort: 8443
