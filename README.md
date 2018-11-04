@@ -75,10 +75,10 @@ controller:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: security
+          - key: core
             operator: In
             values:
-            - S1
+            - "true"
 
   args:
     mode: patchMissing
@@ -87,10 +87,10 @@ controller:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: security
-              operator: IN
+            - key: core
+              operator: In
               values:
-              - S2
+              - "false"
 EOF
 
 $ helm install --name admission-webhook --values values.yaml local/chart
