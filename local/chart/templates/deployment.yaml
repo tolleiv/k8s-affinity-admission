@@ -2,18 +2,26 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: {{ template "fullname" . }}
+{{- if .Values.controller.deploymentAnnotations }}
+  annotations:
+{{ toYaml .Values.controller.deploymentAnnotations | indent 4 }}
+{{- end }}
   labels:
     app: {{ template "fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "fullname" . }}
   template:
     metadata:
+    {{- if .Values.controller.podAnnotations }}
+      annotations:
+{{ toYaml .Values.controller.podAnnotations | indent 8 }}
+    {{- end }}
       labels:
         app: {{ template "fullname" . }}
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -21,21 +29,29 @@ spec:
         releaseRevision: "{{ .Release.Revision }}"
         heritage: "{{ .Release.Service }}"
     spec:
-      serviceAccountName: "{{ .Values.controller.serviceAccount }}"
       {{- if .Values.controller.affinity }}
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
       {{- end }}
-      containers:
+      {{- if .Values.controller.tolerations }}
+      tolerations:
+{{ toYaml .Values.controller.tolerations | indent 8 }}
+      {{- end }}
+      {{- if .Values.controller.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+     {{- end }}
+     serviceAccountName: "{{ .Values.controller.serviceAccount }}"
+     containers:
       - name: webhook
-        image: {{ .Values.controller.image }}:{{ .Values.controller.imageTag }}
-        imagePullPolicy: {{ .Values.controller.imagePullPolicy }}
+        image: {{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}
+        imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
         command: ["/controller"]
         args:
         - --mode={{ .Values.controller.args.mode }}
         - --affinityPatch={{ toJson  .Values.controller.args.affinityPatch }}
         - --logtostderr
-        - -v=4
+        - -v={{ .Values.controller.args.verbosity }}
         - 2>&1
         resources:
           requests:

@@ -10,17 +10,49 @@ admissionRegistration:
       affinity-injection: enabled
 
 controller:
-  image: tolleiv/k8s-affinity-admission
-  imageTag: latest
-  imagePullPolicy: Always
 
-  # Affinity configuration for the controller pod
+  ## controller container image
+  ##
+  image:
+    repository: tolleiv/k8s-affinity-admission
+    tag: latest
+    pullPolicy: Always
+
+  ## controller replica count
+  ##
+  replicaCount: 1
+
+  ## Affinity configuration for the controller pod
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
   affinity: {}
 
+  ## Node tolerations for scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+
+  ## Node labels for controller pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Annotations to be added to controller pods
+  ##
+  podAnnotations: {}
+
   args:
-    # Possible values: denyMissing, patchMissing, patchAlways
+    ## Operation mode for the controller
+    ## Possible values: denyMissing, patchMissing, patchAlways
+    ##
     mode: patchMissing
+
+    ## Affinity patch the controller should apply
+    ##
     affinityPatch: {}
+
+    ## Logging verbosity level
+    verbosity: 4
 
   serviceAccount: k8s-affinity-admission-controller
   tls:
