@@ -22,7 +22,7 @@ webhooks:
   failurePolicy: {{ .Values.admissionRegistration.failurePolicy }}
   {{- if .Values.admissionRegistration.namespaceSelector }}
   namespaceSelector:
-  {{ toYaml .Values.admissionRegistration.namespaceSelector | indent 4 }}
+{{ toYaml .Values.admissionRegistration.namespaceSelector | indent 4 }}
   {{- end }}
   name: {{ template "fullname" . }}.k8s.io
   rules:
@@ -54,7 +54,7 @@ webhooks:
   failurePolicy: {{ .Values.admissionRegistration.failurePolicy }}
   {{- if .Values.admissionRegistration.namespaceSelector }}
   namespaceSelector:
-  {{ toYaml .Values.admissionRegistration.namespaceSelector | indent 4 }}
+{{ toYaml .Values.admissionRegistration.namespaceSelector | indent 4 }}
   {{- end }}
   name: {{ template "fullname" . }}.k8s.io
   rules:

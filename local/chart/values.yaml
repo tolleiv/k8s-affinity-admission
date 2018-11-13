@@ -5,9 +5,7 @@ rbac:
 admissionRegistration:
   # Possible values: Ignore and Fail
   failurePolicy: Ignore
-  namespaceSelector:
-    matchLabels:
-      affinity-injection: enabled
+  namespaceSelector: {}
 
 controller:
 

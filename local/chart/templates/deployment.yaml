@@ -41,8 +41,8 @@ spec:
       nodeSelector:
 {{ toYaml .Values.controller.nodeSelector | indent 8 }}
      {{- end }}
-     serviceAccountName: "{{ .Values.controller.serviceAccount }}"
-     containers:
+      serviceAccountName: "{{ .Values.controller.serviceAccount }}"
+      containers:
       - name: webhook
         image: {{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}
         imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
