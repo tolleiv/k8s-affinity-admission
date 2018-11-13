@@ -9,6 +9,7 @@ import (
 	"k8s.io/api/admission/v1beta1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 )
@@ -19,15 +20,17 @@ type Config struct {
 	PortNumber    string
 	Mode          string
 	AffinityPatch string
+	PodSelectorS  string
+	PodSelector   labels.Selector
 }
 
 func (c *Config) addFlags() {
-
 	flag.StringVar(&c.PairName, "keypairname", "tls", "certificate and key pair name")
 	flag.StringVar(&c.CertDirectory, "certdir", "/var/run/affinity-admission-controller", "certificate and key directory")
 	flag.StringVar(&c.PortNumber, "port", "8443", "webserver port")
 	flag.StringVar(&c.Mode, "mode", "patchMissing", "")
 	flag.StringVar(&c.AffinityPatch, "affinityPatch", "{}", "")
+	flag.StringVar(&c.PodSelectorS, "podSelector", "", "")
 }
 
 func admitPods(ar v1beta1.AdmissionReview, config *Config) *v1beta1.AdmissionResponse {
@@ -66,6 +69,11 @@ func mutatePods(ar v1beta1.AdmissionReview, config *Config) *v1beta1.AdmissionRe
 	}
 	if config.Mode == "patchMissing" && pod.Spec.Affinity != nil {
 		glog.V(2).Infof("affinity found - not patching")
+		return &reviewResponse
+	}
+
+	if config.PodSelector != nil &&!config.PodSelector.Matches(labels.Set(pod.GetLabels())) {
+		glog.V(2).Infof("Pod labels did not match - found %v",pod.GetLabels())
 		return &reviewResponse
 	}
 
@@ -150,10 +158,30 @@ func serveHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func parsePodSelector(podSelectorS string) (labels.Selector, error) {
+	labelSelector := &metav1.LabelSelector{}
+	err := json.Unmarshal([]byte(podSelectorS), labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	return selector, nil
+}
+
 func main() {
 	var config Config
 	config.addFlags()
 	flag.Parse()
+	if config.PodSelectorS != "" {
+		selector, err := parsePodSelector(config.PodSelectorS)
+		if err != nil {
+			glog.Fatal(err)
+		}
+		config.PodSelector = selector
+	}
 
 	http.HandleFunc("/admit", serveAdmit(&config))
 	http.HandleFunc("/mutate", serveMutate(&config))
@@ -169,3 +197,4 @@ func main() {
 		glog.Fatal(err)
 	}
 }
+

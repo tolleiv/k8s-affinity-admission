@@ -36,9 +36,9 @@ func TestAdmit(t *testing.T) {
 
 var mutatePatchExpectation = `[{"op":"add","path":"/spec/affinity","value":{}}]`
 var mutateTests = []struct {
-	file    string
-	mode    string
-	patch   []byte
+	file  string
+	mode  string
+	patch []byte
 }{
 	{"ar_missing_affinity.json", "denyMissing", nil},
 	{"ar_with_affinity.json", "denyMissing", nil},
@@ -52,9 +52,42 @@ func TestMutate(t *testing.T) {
 	for _, tt := range mutateTests {
 		t.Run(tt.file, func(t *testing.T) {
 			admissionReview := loadFixture(tt.file, t)
-			admissionResponse := mutatePods(admissionReview, &Config{Mode: tt.mode, AffinityPatch:"{}"})
+			admissionResponse := mutatePods(admissionReview, &Config{Mode: tt.mode, AffinityPatch: "{}"})
 			if bytes.Compare(admissionResponse.Patch, tt.patch) != 0 {
 				t.Errorf("In %s mode for %s got %s, wanted %s", tt.mode, tt.file, admissionResponse.Patch, tt.patch)
+			}
+		})
+	}
+}
+
+var mutatePatchWithSelectorExpectation = `[{"op":"add","path":"/spec/affinity","value":{}}]`
+var mutatePatchWithSelectorTests = []struct {
+	file     string
+	mode     string
+	selector string
+	patch    []byte
+}{
+	{"ar_missing_affinity.json", "patchMissing", `{}`, []byte(mutatePatchWithSelectorExpectation)},
+	{"ar_missing_affinity.json", "patchMissing", `{"matchLabels":{"app":"mysql"}}`, nil},
+	{"ar_missing_affinity.json", "patchMissing", `{"matchLabels":{"app":"nginx"}}`, []byte(mutatePatchWithSelectorExpectation)},
+	{"ar_missing_affinity.json", "patchAlways", `{"matchLabels":{"app":"mysql"}}`, nil},
+	{"ar_with_affinity.json", "patchAlways", `{"matchLabels":{"app":"mysql"}}`, nil},
+	{"ar_missing_affinity.json", "patchAlways", `{"matchLabels":{"app":"nginx"}}`, []byte(mutatePatchExpectation)},
+	{"ar_with_affinity.json", "patchAlways", `{"matchLabels":{"app":"nginx"}}`, []byte(mutatePatchExpectation)},
+}
+
+func TestMutateWithLabel(t *testing.T) {
+	for _, tt := range mutatePatchWithSelectorTests {
+		t.Run(tt.file, func(t *testing.T) {
+			selector, err := parsePodSelector(tt.selector)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			admissionReview := loadFixture(tt.file, t)
+			admissionResponse := mutatePods(admissionReview, &Config{Mode: tt.mode, PodSelector: selector, AffinityPatch: "{}"})
+			if bytes.Compare(admissionResponse.Patch, tt.patch) != 0 {
+				t.Errorf("In %s mode for %s got %s", "patchMissing", "ar_missing_affinity.json", admissionResponse.Patch)
 			}
 		})
 	}
