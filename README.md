@@ -21,6 +21,7 @@ Please enable the admission webhook feature
 Parameters:
 * `--mode` - configures the working mode
 * `--affinityPatch` [v1.Affinity](https://v1-10.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#affinity-v1-core) configuration serialized to JSON
+* `--podSelector` [metaV1.LabelSelector](https://v1-10.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#labelselector-v1-meta) selector to specify which Pods to patch serialized to JSON
 
 Supported working modes are:
 
@@ -98,6 +99,9 @@ controller:
               operator: In
               values:
               - "false"
+    podSelector:
+      matchExpressions:
+        - {key: app, operator: NotIn, values: [backend,database]}
 EOF
 
 $ helm install --name admission-webhook --values values.yaml local/chart
