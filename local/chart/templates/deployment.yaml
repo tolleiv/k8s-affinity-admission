@@ -50,6 +50,7 @@ spec:
         args:
         - --mode={{ .Values.controller.args.mode }}
         - --affinityPatch={{ toJson  .Values.controller.args.affinityPatch }}
+        - --podSelector={{ toJson  .Values.controller.args.podSelector }}
         - --logtostderr
         - -v={{ .Values.controller.args.verbosity }}
         - 2>&1
