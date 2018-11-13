@@ -58,6 +58,7 @@ Parameter | Description | Default
 `controller.podAnnotations` | Deployment annotations | `{}` |
 `controller.args.mode` | Possible values: denyMissing, patchMissing, patchAlways - see above | `patchMissing`
 `controller.args.affinityPatch` | The affinity patch to apply (Yaml is rendered to Json through the template) - see above | `{}`
+`controller.args.podSelector` | The podSelector for filtering (Yaml is rendered to Json through the template) - see above | `{}`
 `controller.args.verbosity` | Logging verbosity level | `4` |
 `controller.serviceAccount` | Name of the service account to use or create | `k8s-affinity-admission-controller` 
 `controller.tls.requestHeaderCA` | Admission controller server will inherit this CA from the extension-apiserver-authentication ConfigMap if available | `""`
